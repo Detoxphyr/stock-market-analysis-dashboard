@@ -92,12 +92,10 @@ data = get_stock_data(ticker, period)
 if data.empty:
     st.error("No stock data available. Please try again.")
 else:
-    # Calculate returns
-    data["Daily Return (%)"] = (
-        data["Close"].pct_change() * 100
-    )
+        # Calculate returns
+    data["Daily Return (%)"] = data["Close"].pct_change() * 100
 
-        # Calculate moving averages
+    # Calculate moving averages
     data["MA20"] = data["Close"].rolling(window=20).mean()
     data["MA50"] = data["Close"].rolling(window=50).mean()
 
@@ -111,8 +109,20 @@ else:
     avg_loss = loss.rolling(window=14).mean()
 
     rs = avg_gain / avg_loss
-
     data["RSI"] = 100 - (100 / (1 + rs))
+
+    # Calculate MACD
+    ema12 = data["Close"].ewm(span=12, adjust=False).mean()
+    ema26 = data["Close"].ewm(span=26, adjust=False).mean()
+
+    data["MACD"] = ema12 - ema26
+
+    data["Signal"] = data["MACD"].ewm(
+        span=9,
+        adjust=False
+    ).mean()
+
+    data["MACD_Histogram"] = data["MACD"] - data["Signal"]
 
     # Latest stock price
     latest_price = data["Close"].iloc[-1]
@@ -198,13 +208,12 @@ else:
     )
 
     st.plotly_chart(chart, use_container_width=True)
-    # RSI Chart
+       # RSI Chart
     st.divider()
     st.subheader("📉 Relative Strength Index (RSI)")
 
     rsi_chart = go.Figure()
 
-    # RSI line
     rsi_chart.add_trace(
         go.Scatter(
             x=data.index,
@@ -214,21 +223,18 @@ else:
         )
     )
 
-    # Overbought level
     rsi_chart.add_hline(
         y=70,
         line_dash="dash",
         annotation_text="Overbought (70)"
     )
 
-    # Oversold level
     rsi_chart.add_hline(
         y=30,
         line_dash="dash",
         annotation_text="Oversold (30)"
     )
 
-    # Middle level
     rsi_chart.add_hline(
         y=50,
         line_dash="dot",
@@ -247,8 +253,8 @@ else:
         rsi_chart,
         use_container_width=True
     )
-    
-        # Latest RSI reading
+
+    # Latest RSI reading
     latest_rsi = data["RSI"].iloc[-1]
 
     if pd.notna(latest_rsi):
@@ -267,6 +273,51 @@ else:
     else:
         st.info("Not enough data to calculate RSI.")
 
+    # MACD Chart
+    st.divider()
+    st.subheader("📊 MACD (Moving Average Convergence Divergence)")
+
+    macd_chart = go.Figure()
+
+    macd_chart.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["MACD"],
+            mode="lines",
+            name="MACD Line"
+        )
+    )
+
+    macd_chart.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["Signal"],
+            mode="lines",
+            name="Signal Line"
+        )
+    )
+
+    macd_chart.add_trace(
+        go.Bar(
+            x=data.index,
+            y=data["MACD_Histogram"],
+            name="Histogram"
+        )
+    )
+
+    macd_chart.add_hline(y=0, line_dash="dash")
+
+    macd_chart.update_layout(
+        title="MACD (12, 26, 9)",
+        xaxis_title="Date",
+        yaxis_title="MACD Value",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(
+        macd_chart,
+        use_container_width=True
+    )
     # Stock comparison
     st.divider()
     st.subheader("📊 Stock Performance Comparison")

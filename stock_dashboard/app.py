@@ -72,17 +72,7 @@ for symbol in watchlist:
 
 watchlist_df = pd.DataFrame(watchlist_data)
 
-st.dataframe(
-    watchlist_df,
-    use_container_width=True,
-    hide_index=True
-)
 
-company_name = company_names.get(ticker, ticker)
-sector_name = sector_names.get(ticker, "Not specified")
-
-st.subheader(company_name)
-st.caption(f"Ticker: {ticker} | Sector: {sector_name}")
 
 # Download stock data
 @st.cache_data(ttl=300)
@@ -91,6 +81,29 @@ def get_stock_data(symbol, selected_period):
     return stock.history(period=selected_period)
 
 data = get_stock_data(ticker, period)
+stock_info = yf.Ticker(ticker).info
+
+company_name = stock_info.get("longName", ticker)
+sector_name = stock_info.get("sector", "Not available")
+industry_name = stock_info.get("industry", "Not available")
+website = stock_info.get("website", "Not available")
+
+stock_info = yf.Ticker(ticker).info
+
+company_name = stock_info.get("longName", ticker)
+sector_name = stock_info.get("sector", "Not available")
+industry_name = stock_info.get("industry", "Not available")
+website = stock_info.get("website", "Not available")
+
+st.subheader(company_name)
+
+st.caption(f"Ticker: {ticker}")
+
+info_col1, info_col2, info_col3 = st.columns(3)
+
+info_col1.metric("Sector", sector_name)
+info_col2.metric("Industry", industry_name)
+info_col3.write(f"Website: {website}")
 
 if data.empty:
     st.error("No stock data available. Please try again.")

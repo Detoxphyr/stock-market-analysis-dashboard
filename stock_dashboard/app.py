@@ -97,6 +97,12 @@ else:
         data["Close"].pct_change() * 100
     )
 
+    # Calculate moving averages
+    data["MA20"] = data["Close"].rolling(window=20).mean()
+    data["MA50"] = data["Close"].rolling(window=50).mean()
+
+    latest_price = data["Close"].iloc[-1]
+
     latest_price = data["Close"].iloc[-1]
     previous_price = data["Close"].iloc[-2] if len(data) > 1 else latest_price
 
@@ -134,24 +140,45 @@ else:
     col6.metric("Lowest Close", f"${lowest_price:.2f}")
 
 
-     # Price chart
+        # Price chart
     st.subheader(f"{ticker} Stock Price")
 
-    chart = go.Figure(
-        data=[
-            go.Candlestick(
-                x=data.index,
-                open=data["Open"],
-                high=data["High"],
-                low=data["Low"],
-                close=data["Close"],
-                name=ticker
-            )
-        ]
+    chart = go.Figure()
+
+    # Candlestick chart
+    chart.add_trace(
+        go.Candlestick(
+            x=data.index,
+            open=data["Open"],
+            high=data["High"],
+            low=data["Low"],
+            close=data["Close"],
+            name=ticker
+        )
+    )
+
+    # 20-day moving average
+    chart.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["MA20"],
+            mode="lines",
+            name="MA20 (20-day average)"
+        )
+    )
+
+    # 50-day moving average
+    chart.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["MA50"],
+            mode="lines",
+            name="MA50 (50-day average)"
+        )
     )
 
     chart.update_layout(
-        title=f"{ticker} Candlestick Chart",
+        title=f"{ticker} Candlestick Chart with Moving Averages",
         xaxis_title="Date",
         yaxis_title="Price (USD)",
         template="plotly_dark",

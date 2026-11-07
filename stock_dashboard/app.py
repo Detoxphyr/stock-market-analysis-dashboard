@@ -3,6 +3,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Page settings
 st.set_page_config(
@@ -133,14 +134,28 @@ else:
     col6.metric("Lowest Close", f"${lowest_price:.2f}")
 
 
-    # Price chart
+     # Price chart
     st.subheader(f"{ticker} Stock Price")
 
-    chart = px.line(
-        data,
-        x=data.index,
-        y="Close",
-        title=f"{ticker} Historical Closing Price"
+    chart = go.Figure(
+        data=[
+            go.Candlestick(
+                x=data.index,
+                open=data["Open"],
+                high=data["High"],
+                low=data["Low"],
+                close=data["Close"],
+                name=ticker
+            )
+        ]
+    )
+
+    chart.update_layout(
+        title=f"{ticker} Candlestick Chart",
+        xaxis_title="Date",
+        yaxis_title="Price (USD)",
+        template="plotly_dark",
+        xaxis_rangeslider_visible=False
     )
 
     st.plotly_chart(chart, use_container_width=True)

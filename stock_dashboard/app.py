@@ -50,7 +50,16 @@ period = st.sidebar.selectbox(
 st.divider()
 st.subheader("⭐ Market Watchlist")
 
-watchlist = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"]
+watchlist_options = [
+    "AAPL", "NVDA", "TSLA", "MSFT", "AMZN",
+    "GOOGL", "META", "AMD", "NFLX", "AVGO"
+]
+
+watchlist = st.sidebar.multiselect(
+    "Choose stocks for your watchlist",
+    options=watchlist_options,
+    default=["AAPL", "NVDA", "TSLA"]
+)
 
 watchlist_data = []
 

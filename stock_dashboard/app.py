@@ -97,12 +97,24 @@ else:
         data["Close"].pct_change() * 100
     )
 
-    # Calculate moving averages
+        # Calculate moving averages
     data["MA20"] = data["Close"].rolling(window=20).mean()
     data["MA50"] = data["Close"].rolling(window=50).mean()
 
-    latest_price = data["Close"].iloc[-1]
+    # Calculate RSI (14-period)
+    delta = data["Close"].diff()
 
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+
+    rs = avg_gain / avg_loss
+
+    data["RSI"] = 100 - (100 / (1 + rs))
+
+    # Latest stock price
     latest_price = data["Close"].iloc[-1]
     previous_price = data["Close"].iloc[-2] if len(data) > 1 else latest_price
 
@@ -186,6 +198,74 @@ else:
     )
 
     st.plotly_chart(chart, use_container_width=True)
+    # RSI Chart
+    st.divider()
+    st.subheader("📉 Relative Strength Index (RSI)")
+
+    rsi_chart = go.Figure()
+
+    # RSI line
+    rsi_chart.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["RSI"],
+            mode="lines",
+            name="RSI"
+        )
+    )
+
+    # Overbought level
+    rsi_chart.add_hline(
+        y=70,
+        line_dash="dash",
+        annotation_text="Overbought (70)"
+    )
+
+    # Oversold level
+    rsi_chart.add_hline(
+        y=30,
+        line_dash="dash",
+        annotation_text="Oversold (30)"
+    )
+
+    # Middle level
+    rsi_chart.add_hline(
+        y=50,
+        line_dash="dot",
+        annotation_text="Middle (50)"
+    )
+
+    rsi_chart.update_layout(
+        title="RSI (14)",
+        xaxis_title="Date",
+        yaxis_title="RSI Value",
+        template="plotly_dark",
+        yaxis=dict(range=[0, 100])
+    )
+
+    st.plotly_chart(
+        rsi_chart,
+        use_container_width=True
+    )
+    
+        # Latest RSI reading
+    latest_rsi = data["RSI"].iloc[-1]
+
+    if pd.notna(latest_rsi):
+        if latest_rsi >= 70:
+            rsi_status = "Potentially Overbought"
+        elif latest_rsi <= 30:
+            rsi_status = "Potentially Oversold"
+        else:
+            rsi_status = "Neutral Range"
+
+        st.metric(
+            "Latest RSI",
+            f"{latest_rsi:.2f}",
+            rsi_status
+        )
+    else:
+        st.info("Not enough data to calculate RSI.")
 
     # Stock comparison
     st.divider()

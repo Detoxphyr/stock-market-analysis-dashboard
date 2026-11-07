@@ -19,10 +19,10 @@ st.write("My first FinTech portfolio project")
 # Sidebar
 st.sidebar.header("Stock Selection")
 
-ticker = st.sidebar.selectbox(
-    "Choose a stock",
-    ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"]
-)
+ticker = st.sidebar.text_input(
+    "Enter a stock ticker",
+    value="AAPL"
+).strip().upper()
 
 # Company information
 company_names = {
@@ -78,8 +78,11 @@ st.dataframe(
     hide_index=True
 )
 
-st.subheader(company_names[ticker])
-st.caption(f"Ticker: {ticker} | Sector: {sector_names[ticker]}")
+company_name = company_names.get(ticker, ticker)
+sector_name = sector_names.get(ticker, "Not specified")
+
+st.subheader(company_name)
+st.caption(f"Ticker: {ticker} | Sector: {sector_name}")
 
 # Download stock data
 @st.cache_data(ttl=300)
